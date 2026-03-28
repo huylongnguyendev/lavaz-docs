@@ -1,0 +1,128 @@
+---
+title: Creating Boxes
+description: Learn how to define state, actions, and persistence within a Lavaz Box.
+---
+
+import { Tab, Tabs } from "fumadocs-ui/components/tabs";
+
+A **Box** is the fundamental building block of **Lavaz Store**. It encapsulates a specific domain of state and the logic required to manipulate it, making your application modular, testable, and highly maintainable.
+
+## Basic Anatomy
+
+To create a box, use the `createBox` builder. This function requires an **Initial State** and an **Actions** definition.
+
+<Tabs items={["TypeScript", "JavaScript"]}>
+    <Tab value="TypeScript">
+        ```typescript title="src/store/boxes/counterBox.ts"
+        import { createBox } from "@lavaz-store";
+
+        // 1. Define the State Structure
+        interface CounterState {
+            count: number;
+            lastUpdated: string | null;
+        }
+
+        // 2. Set the Initial Values
+        const initialState: CounterState = {
+            count: 0,
+            lastUpdated: null,
+        };
+
+        // 3. Define Logic and Finalize
+        export const counterBox = createBox(
+        initialState,
+        (set) => ({
+            inc: () => set((prev) => ({ 
+                count: prev.count + 1,
+                lastUpdated: new Date().toISOString() 
+            })),
+            reset: () => set({ count: 0, lastUpdated: null }),
+        })).create();
+        ```
+    </Tab>
+    <Tab value="JavaScript">
+        ```javascript title="src/store/boxes/counterBox.js"
+        import { createBox } from "@lavaz-store";
+
+        // 1. Set the Initial Values
+        const initialState: CounterState = {
+            count: 0,
+            lastUpdated: null,
+        };
+
+        // 3. Define Logic and Finalize
+        export const counterBox = createBox(
+        initialState,
+        (set) => ({
+            inc: () => set((prev) => ({ 
+                count: prev.count + 1,
+                lastUpdated: new Date().toISOString() 
+            })),
+            reset: () => set({ count: 0, lastUpdated: null }),
+        })).create();
+        ```
+    </Tab>
+</Tabs>
+
+## State Updates with set
+The `set` function is the exclusive way to modify state within a Box. It ensures data integrity and triggers reactive updates across your UI.
+
+### 1. Functional Updates (Recommended)
+Use this pattern when the next state depends on the previous state. This prevents race conditions in complex asynchronous flows.
+
+```typescript
+inc: () => set((prev) => ({ count: prev.count + 1 }))
+```
+
+### 2. Direct Object Updates
+Use this pattern to overwrite values directly without referencing the previous state.
+
+```typescript
+reset: () => set({ count: 0 })
+```
+
+<Callout type="warn" title="Safety Guard">
+Lavaz Store will throw a runtime error if you attempt to set the state to `undefined`. This keeps your data structure predictable and prevents "undefined is not an object" crashes.
+</Callout>
+
+---
+
+## Persistence & Hydration
+One of the most powerful features of Lavaz is the ability to sync state with the browser storage automatically.
+
+<Tabs items={['Local Storage', 'Session Storage']}>
+    <Tab value="Local Storage">
+        Data persists even after the browser is closed. Ideal for settings or auth tokens.
+
+        ```typescript 
+        export const userBox = createBox(initialState, actions)
+        .persist('user-auth', 'local') // 'local' is the default
+        .create();
+        ```
+    </Tab>
+    <Tab value="Session Storage">
+        Data is cleared when the browser tab is closed. Ideal for temporary form data.
+
+        ```typescript 
+        export const tempBox = createBox(initialState, actions)
+        .persist('temp-data', 'session')
+        .create(); 
+        ```
+    </Tab>
+</Tabs>
+
+---
+
+## The Hydration Flow
+When `.create()` is called, Lavaz performs the following:
+
+* **Detection**: Checks the selected storage for the unique key provided.
+* **Merging**: If valid data exists, it hydrates the state. Otherwise, it falls back to `initialState`.
+* **Auto-Sync**: Every subsequent state change is automatically serialized and saved to the storage in the background.
+
+---
+
+## Best Practices
+* **Domain Driven**: Keep boxes focused on a single domain (e.g., AuthBox, CartBox). Avoid "God Boxes" that manage unrelated data.
+* **Immutable Updates**: Always return a new object in the set function. Lavaz uses Object.is to detect changes and optimize rendering.
+* **Unique Keys**: Ensure that the string passed to .persist() is unique across your entire application to avoid data collisions.

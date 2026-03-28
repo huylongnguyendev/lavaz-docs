@@ -1,0 +1,60 @@
+---
+title: Create a Store
+description: Learn how to centralize your modular boxes into a unified, conflict-free store registry.
+---
+
+A **Store** in Lavaz is the centralized registry that orchestrates your modular **Boxes**. It ensures that your application state is organized, conflict-free, and easily accessible across your entire workspace.
+
+## The Purpose of `createStore`
+While individual boxes can function independently, the `createStore` function acts as your infrastructure's "Manager." Its primary responsibilities include:
+
+* **Conflict Detection**: It scans all registered boxes to ensure no two boxes share the same `boxId`. This prevents silent data overwrites during development.
+* **Centralized Access**: It provides a single source of truth, making it easier to debug state transitions and track your application's data flow.
+* **Infrastructure Integrity**: It validates that the store is not empty and that each entry is a valid Lavaz Box.
+
+---
+
+## Defining the Registry
+Typically, you should define your store in a central file, such as `src/store/store.ts` or `src/store/index.ts`.
+
+```typescript
+import { createStore } from '@lavaz-store';
+import { counterBox } from './boxes/counterBox';
+import { authBox } from './boxes/authBox';
+
+// Register your modular boxes
+export const store = createStore({
+  counter: counterBox,
+  auth: authBox,
+});
+```
+---
+
+## Production vs. Development
+Lavaz is designed to be **strict during development** and **lightweight in production**.
+
+When your environment is set to `production`, Lavaz skips expensive validation checks (like conflict detection and empty object checks) to maximize performance. During `development` or `test`, it provides detailed error messages to help you catch architectural mistakes early.
+
+<Callout type="info" title="Global Singleton">
+In most React applications, you only need to call createStore once. Export the resulting store object to use it as a reference point for your entire application.
+</Callout>
+
+---
+
+## Conflict Resolution
+If you accidentally assign two boxes with the same `persist` ID to the store, Lavaz will throw a descriptive error:
+
+```text
+[Lavaz]: Conflict. The box you are trying to assign to "settings" is already used by "userConfig".
+```
+### How it works
+During the initialization of `createStore`, Lavaz builds a internal map of all `boxIds`. If a collision is detected:
+1. It identifies the new key you are trying to assign (`settings`).
+2. It identifies the existing key that already owns that `boxId` (`userConfig`).
+3. It throws an immediate exception to prevent unpredictable state behavior or persistence overwrites.
+
+<Callout type="info">
+This check is automatically skipped in Production environments to ensure zero overhead for your end-users.
+</Callout>
+
+This ensures that your persistence layers (`localStorage`/`sessionStorage`) never collide, keeping your user data safe and predictable.

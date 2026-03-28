@@ -1,0 +1,72 @@
+---
+title: File Structure
+description: Recommended directory structure for Lavaz Store in React projects.
+---
+
+import { File, Folder, Files } from "fumadocs-ui/components/files";
+import { Tab, Tabs } from "fumadocs-ui/components/tabs";
+
+As your application grows, keeping your state logic organized is crucial. **Lavaz Store** encourages a modular approach by separating state definitions (**Boxes**) from the central registry (**Store**).
+
+## Recommended Pattern
+
+For most React applications (Next.js, Tanstack Start, Vite, or Create React App), we recommend creating a dedicated `store` directory within your `src` folder.
+
+<Files>
+  <Folder name="src">
+    <Folder name="app">
+        <File name="layout.tsx" />
+        <File name="page.tsx" />
+        <File name="global.css" />
+    </Folder>
+    <Folder name="components">
+        <File name="button.tsx" />
+        <File name="tabs.tsx" />
+        <File name="dialog.tsx" />
+    </Folder>
+    <Folder name="store">
+        <File name="store.ts" />
+        <Folder name="boxes">
+            <File name="counterBox.ts" />
+        </Folder>
+    </Folder>
+    </Folder>
+  <File name="package.json" />
+  <File name=".env" />
+</Files>
+
+## Directory Breakdown
+
+### 1. The `boxes/` Folder
+This is where your **Domain Logic** lives. Each file inside this folder represents a standalone state module. 
+- **Naming Convention:** We recommend using `camelCase` with a `Box` suffix (e.g., `userBox.ts`, `settingsBox.ts`) to easily distinguish state files from UI components.
+
+### 2. The `store.ts` File
+This is your **Central Registry**. It acts as the orchestrator that imports individual boxes and combines them into a unified store using `createStore`.
+
+```typescript title="src/store/store.ts"
+    import { createStore } from '@lavaz-store';
+    import { counterBox } from './boxes/counterBox';
+
+    export const store = createStore({
+    counter: counterBox,
+    });
+```
+
+### Architectural Principles
+<Callout type="info" title="Separation of Concerns">
+By keeping the `store` directory at the same level as `components`, you ensure that your business logic is decoupled from your view layer. This makes it significantly easier to:
+
+* **Test** your boxes independently of React.
+* **Reuse** state logic across different components.
+* **Maintain** a clean codebase as the project scales to hundreds of files.
+</Callout>
+
+---
+
+## Best Practices
+* **Keep Boxes Atomic**: A box should ideally manage a single feature or domain. If a box gets too large, split it into smaller boxes.
+
+* **Avoid Nested Folders inside Boxes**: Unless your project is massive, keep all boxes in a flat list inside the boxes/ folder for better discoverability.
+
+* **Stable IDs**: Ensure the name used in `store.ts` matches the intent of the box for clear `useAppStore` usage.

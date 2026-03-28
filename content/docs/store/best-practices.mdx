@@ -1,0 +1,22 @@
+---
+title: Best Practices
+description: Architectural guidelines to keep your Lavaz Store scalable, performant, and maintainable.
+---
+
+## Atomic State Design
+Each **Box** should represent a single "Source of Truth" for a specific domain. Avoid creating a "God Box" that handles everything.
+
+* **Good**: `AuthBox`, `CartBox`, `ThemeBox`.
+* **Bad**: `AppBox` (containing auth, UI, and data).
+
+## Selector Optimization
+To prevent unnecessary re-renders, always use specific selectors.
+
+* **Inefficient**: `const [state] = useAppStore(userBox);` (Triggers re-render on any user change).
+* **Efficient**: `const [name] = useAppStore(userBox, s => s.name);` (Only re-renders if name changes).
+
+## Box Naming Convention
+Always suffix your files and variable names with `Box`.
+
+Example: `const counterBox = createBox(...)`.
+This makes it instantly clear in your IDE's global search whether you are looking at a UI component or a State module.

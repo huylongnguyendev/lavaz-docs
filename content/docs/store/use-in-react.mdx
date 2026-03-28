@@ -1,0 +1,59 @@
+---
+title: Use in React
+description: Learn how to connect React components to Lavaz Boxes using the high-performance useAppStore hook and selectors.
+---
+
+The `useAppStore` hook is the primary interface for connecting your React components to your state infrastructure. It is designed with a **Selector-first** approach to ensure your UI remains lightning-fast by preventing unnecessary re-renders.
+
+## The `useAppStore` Hook
+To consume state, you pass your **Box** and an optional **Selector** function to the hook. The selector allows you to subscribe to specific parts of the state.
+
+```typescript
+import { useAppStore } from "@lavaz-store";
+import { counterBox } from "../store/boxes/counterBox";
+
+const Counter = () => {
+  // Subscribe only to the 'count' value
+  const [{count}, { inc, dec }] = useAppStore(counterBox, (s) => s.count);
+
+  return (
+    <section>
+      <h1>Count: {count}</h1>
+      <div className="flex gap-2">
+        <button onClick={inc}>Increment</button>
+        <button onClick={dec}>Decrement</button>
+      </div>
+    </section>
+  );
+};
+```
+
+---
+
+## Why use Selectors?
+By default, React components re-render whenever the object they are "watching" changes. In a large state object, this can lead to performance bottlenecks.
+
+**Lavaz Store** solves this using a **Shallow Comparison** strategy:
+
+|Pattern|Behavior|Performance
+|:--- | :--- | :--- |
+|`useAppStore(box)`|Re-renders on any change in the box.|**Medium**
+|useAppStore(box, (s) => s.val)|Re-renders **only** if val changes.|**High**
+
+<Callout type="info" title="Performance Tip">
+Always use a selector to pick the specific primitive values (strings, numbers, booleans) your component needs. This ensures your component ignores updates to other unrelated parts of the same box.
+</Callout>
+
+---
+
+## Accessing Actions
+The `useAppStore` hook returns a tuple. The second element is a stable object containing all the **Actions** you defined when creating the box.
+
+```typescript
+const [state, actions] = useAppStore(myBox);
+
+// Destructuring actions is the cleanest way to use them:
+const { updateName, logout } = actions;
+```
+
+Actions are **identity-stable**, meaning they do not change between renders. You can safely pass them to `useEffect` dependencies or memoized child components (`React.memo`) without triggering extra updates.

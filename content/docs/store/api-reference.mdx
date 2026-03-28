@@ -1,0 +1,12 @@
+---
+title: API Reference
+description: Quick lookup for all Lavaz Store functions and methods.
+---
+
+|Function|Parameters|Return Type|Description
+|:--- | :--- | :--- |:--- |
+|`createBox`|(`initialState`, `actions`)|`BoxBuilder`|Initiates the creation of a new state module.
+|`.persist()`|(key, engine?)|`BoxBuilder`|Enables auto-sync with `local` or `session` storage.
+|`.create()`|None|`Box`|Finalizes the box and triggers the hydration process.
+|`createStore`|(`boxesObject`)|`Registry`|Centralizes boxes and validates for `boxId` conflicts.
+|`useAppStore`|(`box`, `selector`?)|`[State, Actions]`|	The primary hook for consuming state in React.

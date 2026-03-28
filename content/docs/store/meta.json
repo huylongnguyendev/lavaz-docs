@@ -1,0 +1,13 @@
+{
+  "pages": [
+    "quick-start",
+    "file-structure",
+    "creating-boxes",
+    "create-store",
+    "use-in-react",
+    "environment-configuration",
+    "persistence",
+    "best-practices",
+    "api-reference"
+  ]
+}

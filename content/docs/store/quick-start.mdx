@@ -1,0 +1,180 @@
+---
+title: Quick Start
+description: Lavaz Store - The Global State Management for React.
+---
+
+import { Tab, Tabs } from "fumadocs-ui/components/tabs";
+
+# Quick Start
+
+Integrate **Lavaz Store** into your React application by following these simple steps. Lavaz is designed to be lightweight, type-safe, and incredibly easy to set up.
+
+## 1. Installation
+
+Install the core package using your preferred package manager:
+
+<Tabs items={["npm", "pnpm", "yarn", "bun"]}>
+  <Tab value="npm">```bash npm install @lavaz-store ```</Tab>
+  <Tab value="pnpm">```bash pnpm add @lavaz-store ```</Tab>
+  <Tab value="yarn">```bash yarn add @lavaz-store ```</Tab>
+  <Tab value="bun">```bash bun add @lavaz-store ```</Tab>
+</Tabs>
+
+### Folder Structure
+
+It is recommended to centralize your application state. Create a `store` folder within your `src` directory. If your project does not use a `src` directory, create the `store` folder at the `root` level.
+
+```text
+project/
+├── src/
+│   └── store/  <-- Recommended
+└── ...
+```
+
+## 2. Create a box
+
+A Box is an independent unit of state. It encapsulates your data, actions, and optional persistence logic.
+
+To keep your store organized, create a `boxes` folder inside your `store` directory. Then, create a file named `counterBox` with the appropriate extension (`.ts` or `.js`).
+
+```text
+project/
+└── src/
+    └── store/
+        └── boxes/
+            └── counterBox.ts  <-- Create your boxes here
+```
+
+---
+
+<Tabs items={['TypeScript', 'JavaScript']}>
+  <Tab value="TypeScript">
+    ```typescript title="store/boxes/counterBox.ts"
+    import { createBox } from '@lavaz-store';
+
+    interface CounterState {
+      count: number;
+    }
+
+    const initialState: CounterState = {
+      count: 0
+    };
+
+    export const counterBox = createBox(
+      initialState,
+      (set) => ({
+        inc: () => set((prev) => ({ count: prev.count + 1 })),
+        dec: () => set((prev) => ({ count: prev.count - 1 })),
+      })
+    ).create();
+    ```
+
+  </Tab>
+  <Tab value="JavaScript">
+    ```javascript title="store/boxes/counterBox.js"
+    import { createBox } from '@lavaz-store';
+
+    const initialState = {
+      count: 0
+    };
+
+    export const counterBox = createBox(
+      initialState,
+      (set) => ({
+        inc: () => set((prev) => ({ count: prev.count + 1 })),
+        dec: () => set((prev) => ({ count: prev.count - 1 })),
+      })
+    ).create();
+    ```
+
+  </Tab>
+</Tabs>
+
+## 3. Create a store
+
+A `Store` is the central hub that manages multiple boxes. It provides a unified interface to access your state and actions across the entire workspace, ensuring that there are no ID conflicts between different parts of your application.
+
+Create a `store.ts` (or `store.js`) file directly inside your `store` folder.
+
+```text
+project/
+└── src/
+    └── store/
+        ├── boxes/
+        │   └── counterBox.ts
+        └── store.ts  <-- Create this file
+```
+
+<Tabs items={["TypeScript", "JavaScript"]}>
+  <Tab value="TypeScript">
+    ```typescript title="src/store/store.ts" 
+    import {createStore} from '@lavaz-store'; 
+    import {counterBox} from './boxes/counterBox';
+    // Register all your boxes here
+    export const store = createStore({
+      counter: counterBox,
+      // auth: authBox,
+      // settings: settingsBox,
+    });
+    ```
+  </Tab>
+  <Tab value="JavaScript">
+  ```javascript title="src/store/store.js"
+    import { createStore } from '@lavaz-store';
+    import { counterBox } from './boxes/counterBox';
+
+    // Register all your boxes here
+    export const store = createStore({
+      counter: counterBox,
+    });
+
+```
+</Tab>
+</Tabs>
+
+### Why register the Store?
+
+While boxes can technically function on their own, using createStore acts as the architectural glue for your application.
+
+<Callout type="info" title="Architectural Benefits">
+* **Conflict Prevention**: Lavaz performs runtime checks during development to ensure no two boxes share the same `boxId`, preventing silent state collisions.
+
+* **Centralized Infrastructure**: It creates a single source of truth for your entire workspace, making it easier to debug and track data flow.
+
+* **Strict Separation of Concerns**: It enforces a clean boundary between where state is `defined` (boxes) and where it is `composed` (the store), leading to better maintainability as your project grows.
+</Callout>
+
+## 4. Use in React
+
+Connect your components to your state infrastructure using the `useAppStore` hook. This hook is optimized with **Selectors** to ensure your UI only re-renders when the specific data it needs actually changes.
+
+```typescript
+import { useAppStore } from "@lavaz/store";
+import { counterBox } from "./counterBox";
+
+const Counter = () => {
+  // Only re-renders if 'count' changes
+  const [{count}, { inc, dec }] = useAppStore(counterBox, (s) => s.count);
+
+  return (
+    <div>
+      <h1>{count}</h1>
+      <button onClick={inc}>+</button>
+      <button onClick={dec}>-</button>
+    </div>
+  );
+};
+```
+
+<Callout type="info" title="Why use Selectors?">
+  By passing (s) =&gt; s.count as the second argument, useAppStore performs a
+  shallow comparison. Your component will not re-render if other properties in
+  the counterBox change, keeping your application lightning-fast.
+</Callout>
+
+---
+## Summary of the Flow
+1. Install the package.
+2. Define your state logic in a Box.
+3. Register the box in your central Store.
+4. Consume the state in React using Selectors.

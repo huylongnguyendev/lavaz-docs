@@ -1,0 +1,67 @@
+---
+title: Persistence
+description: Learn how to persist your state across browser sessions with zero boilerplate.
+---
+
+import { Tab, Tabs } from "fumadocs-ui/components/tabs";
+
+**Lavaz Store** provides a built-in, seamless way to persist your state to the browser's storage. It handles serialization, synchronization, and hydration automatically, so you don't have to write manual `localStorage` logic.
+
+## Basic Usage
+
+To enable persistence, chain the `.persist()` method before calling `.create()`. You must provide a **unique key** that will be used as the storage identifier.
+
+```typescript title="src/store/boxes/authBox.ts"
+export const authBox = createBox(initialState, actions)
+  .persist('auth-session') // Key used in localStorage
+  .create();
+```
+
+---
+
+## Storage Engines
+Lavaz supports two primary storage engines. You can specify the engine as the second argument to `.persist()`.
+
+|Engine	|Storage Type	|Data Lifetime
+|`local` (Default)	|`localStorage`	|Persists even after the browser is closed.
+|`session`	|`sessionStorage`	|Cleared when the page session ends (tab is closed).
+
+<Tabs items={['Local (Default)', 'Session']}>
+    <Tab value="Local (Default)">
+    ```typescript 
+    .persist('settings', 'local')
+    ```
+    </Tab>
+    <Tab value="Session">
+    ```typescript 
+    .persist('temp-form', 'session')
+    ```
+    </Tab>
+</Tabs>
+
+---
+
+## How it Works: The Hydration Lifecycle
+When you call `.create()`, Lavaz manages the data lifecycle through a process called **Hydration**:
+
+1. **Initialization**: The Box starts with your defined initialState.
+2. **Lookup**: Lavaz checks the chosen storage for the key (e.g., 'auth-session').
+3. **Hydration**: If valid JSON data is found, it overwrites the initial state with the stored data.
+4. **Reactive Sync**: Every time an action calls set(), Lavaz automatically debounces and saves the new state back to the storage.
+
+<Callout type="warn" title="Unique Keys are Critical">
+Each Box must have a **unique persistence key** within your application. Reusing a key across different boxes will cause them to overwrite each other's data, leading to state corruption.
+</Callout>
+
+---
+## Performance Optimization
+Lavaz is smart about how it writes to storage:
+
+* **Shallow Comparison**: It only writes to disk if the state has actually changed.
+* **Error Handling**: If the storage is full (QuotaExceededError) or unavailable, Lavaz will log a warning in development but keep the app running in-memory to ensure a smooth user experience.
+
+---
+
+## Best Practices
+* **Sensitive Data**: Avoid persisting highly sensitive information (like raw passwords) in `localStorage`. Use it for UI preferences, tokens, or non-critical application state.
+* **State Versioning**: If you change your state structure significantly in a new version of your app, consider changing the persistence key to prevent the app from trying to hydrate old, incompatible data.

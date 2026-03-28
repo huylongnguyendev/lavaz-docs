@@ -1,0 +1,59 @@
+---
+title: Environment Configuration
+description: Understand how Lavaz Store optimizes performance between development and production.
+---
+
+**Lavaz Store** is designed to be "Strict in Development, Lightweight in Production." It automatically detects your environment to balance developer experience with raw performance.
+
+## How it Works
+
+Lavaz uses a internal check to determine the current environment. It looks for `NODE_ENV` in both `process.env` (Node.js/CJS) and `import.meta.env` (Vite/ESM).
+
+```typescript
+const isProduction = 
+  process.env.NODE_ENV === "production" || 
+  import.meta.env.NODE_ENV === "production";
+```
+
+---
+
+## Development vs. Production
+The behavior of `createStore` and `createBox` changes significantly based on the environment:
+
+| Feature | Development / Test | Production |
+| :--- | :--- | :--- |
+| **Empty Store Check** | `Throws Error` | Skipped |
+| **Box ID Conflict Check** | `Throws Error` | Skipped |
+| **Invalid Box Validation** | Active | Disabled |
+| **Performance Overhead** | Low | **Zero** |
+
+### 1. Development & Test Mode
+During development, Lavaz acts as a guardrail. It performs Registry Validation to ensure:
+
+* Your store is not an empty object.
+* Every box has a unique `boxId` (preventing persistence collisions).
+* You haven't forgotten to call `.create()` on your boxes.
+
+### 2. Production Mode
+In production, all validation logic is stripped away. Lavaz assumes your architecture is already verified, allowing the store to initialize instantly with zero computation overhead.
+
+---
+
+## Testing Environment
+
+Lavaz also recognizes **Test** environments (like Vitest or Jest). In these modes, all safety checks remain **Active**. This ensures that if your tests create invalid store configurations, they will fail loudly before reaching your users.
+
+<Callout type="warn" title="Important for Vite Users">
+If you are using Vite, ensure your `NODE_ENV` is correctly set in your build scripts. Lavaz relies on this variable to toggle its optimization engine.
+</Callout>
+
+## Manual Overrides
+In rare cases where you need to force a specific mode, ensure your bundler (Webpack, Vite, or Esbuild) is configured to define `process.env.NODE_ENV` globally.
+
+```typescript
+export default defineConfig({
+  define: {
+    'process.env.NODE_ENV': JSON.stringify('production'),
+  },
+});
+```
