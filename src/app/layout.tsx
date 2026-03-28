@@ -22,7 +22,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Lavaz Store",
     description: "The Infrastructure-first state management library for React.",
-    url: "https://lavaz.dev",
+    url: "https://lavaz-docs.vercel.app/",
     siteName: "Lavaz",
     images: [
       {
